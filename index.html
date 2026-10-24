@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leash Length · APM Lab</title>
+<meta name="description" content="How long should an unattended AI agent task in a scheduled job be allowed to run? An inverse-CDF Monte Carlo decision prototype by Shriya Shekatkar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,800;1,9..40,400&family=Fraunces:ital,opsz,wght@1,9..144,800;1,9..144,900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#F27DB8; --pink-deep:#B8286F; --lemon:#FFEB2B; --plum:#3A0F2A; --ink:#24121c;
+  --cream:#F7EFE3; --tulle:#EDE3D6; --blush:#E58BA6; --cherry:#C8102E;
+  --heart:#E46DAE; --water:#163687; --water-deep:#0C1D4F; --lotus:#D9488B; --lotus-pale:#F6B9D3; --petal:#F4F1E6;
+  --muted:#6b4a5c;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;font-size:16px;line-height:1.55;overflow-x:hidden}
+a{color:var(--pink-deep)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+h2{font-family:"Bagel Fat One",system-ui;font-weight:400;font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0 0 14px;color:var(--plum)}
+h3{margin:0 0 6px;font-size:18px}
+section{padding:56px 0}
+.kicker{display:inline-block;font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;background:var(--plum);color:var(--lemon);padding:4px 10px;border-radius:99px;margin-bottom:12px}
+/* grain overlay */
+.grain{position:relative;isolation:isolate}
+.grain::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;opacity:.22;mix-blend-mode:multiply;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .1 0 0 0 0 .15 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ===== HERO (pin 1: hot pink field, lemon cosmic swoosh, white stars) ===== */
+.hero{background:var(--pink);overflow:hidden;position:relative;padding:0}
+.hero svg.sky{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.hero .wrap{position:relative;z-index:1;padding-top:64px;padding-bottom:72px}
+.hero h1{font-family:"Bagel Fat One",system-ui;font-weight:400;font-size:clamp(40px,8.4vw,96px);line-height:.95;margin:10px 0 18px;color:var(--plum);max-width:13ch;
+ text-shadow:3px 3px 0 var(--lemon),6px 6px 0 rgba(58,15,42,.18)}
+.hero .launch{display:inline-block;background:#fff;border:2.5px solid var(--plum);border-radius:16px;padding:10px 14px;max-width:640px;font-size:15px;box-shadow:5px 5px 0 var(--plum)}
+.hero .launch a{color:var(--pink-deep);font-weight:800}
+.byline{margin-top:22px;font-weight:800;color:var(--plum);font-size:15px}
+.byline span{display:inline-block;background:var(--lemon);padding:2px 10px;border-radius:99px;border:2px solid var(--plum);margin:4px 6px 0 0}
+.twinkle{animation:tw 2.6s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes tw{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(.6) rotate(18deg)}}
+.drift{animation:drift 9s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translateY(-14px)}}
+
+/* ===== CARDS (pin 2: coquette cutout stickers on tulle, cherry buttons) ===== */
+.tulle{background:var(--tulle);background-image:
+  radial-gradient(circle at 25% 25%,rgba(255,255,255,.55) 1px,transparent 1.6px),
+  radial-gradient(circle at 75% 75%,rgba(255,255,255,.4) 1px,transparent 1.6px),
+  repeating-linear-gradient(60deg,rgba(255,255,255,.18) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(-60deg,rgba(255,255,255,.18) 0 1px,transparent 1px 7px);
+  background-size:9px 9px,9px 9px,auto,auto}
+.masonry{columns:3 280px;column-gap:20px}
+.sticker{break-inside:avoid;background:#fffaf4;border-radius:22px;padding:18px 18px 16px;margin:0 0 20px;position:relative;
+ box-shadow:0 0 0 6px #fff,0 0 0 8.5px rgba(58,15,42,.12),8px 12px 18px rgba(58,15,42,.18);transform:rotate(var(--r,0deg))}
+.sticker.corset{background:linear-gradient(180deg,#F3B6C6,#E58BA6);color:var(--plum)}
+.sticker.corset .lace{display:flex;gap:10px;margin-top:10px}
+.sticker.corset .lace i{width:10px;height:10px;border-radius:50%;background:var(--cherry);box-shadow:inset -2px -2px 0 rgba(0,0,0,.25),inset 2px 2px 0 rgba(255,255,255,.4)}
+.sticker .tag{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--pink-deep)}
+.sticker.corset .tag{color:var(--plum)}
+.sticker ul{margin:6px 0 0;padding-left:18px}
+.sticker li{margin:3px 0}
+.bow{position:absolute;top:-16px;right:18px;width:46px;height:30px}
+.guard{display:flex;justify-content:space-between;gap:10px;border-top:1.5px dashed rgba(58,15,42,.25);padding:7px 0;font-size:14.5px}
+.guard b{font-family:"JetBrains Mono",monospace;font-size:13px;white-space:nowrap}
+.btn{font:800 14px "DM Sans",sans-serif;cursor:pointer;border:2.5px solid var(--plum);background:var(--cherry);color:#fff;padding:9px 16px;border-radius:99px;box-shadow:0 0 0 3px #fff,4px 5px 0 3px var(--plum);transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:#fff;color:var(--plum)}
+.btn:focus-visible,input:focus-visible{outline:3px solid var(--lemon);outline-offset:3px}
+
+/* ===== SIM ROOM (pin 4: deep blue bowl water, lotus pinks, cream petals) ===== */
+.sim{background:radial-gradient(120% 90% at 50% 0%,#2448A8 0%,var(--water) 40%,var(--water-deep) 100%);color:var(--petal)}
+.sim h2{color:var(--petal)}
+.sim .kicker{background:var(--lotus-pale);color:var(--water-deep)}
+.simgrid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:22px;align-items:start}
+.panel{background:rgba(255,255,255,.07);border:1.5px solid rgba(246,185,211,.35);border-radius:22px;padding:16px}
+.ctl{margin:0 0 14px}
+.ctl label{display:flex;justify-content:space-between;font-weight:600;font-size:14px}
+.ctl label output{font-family:"JetBrains Mono",monospace;color:var(--lotus-pale)}
+.ctl small{display:block;color:#cdd6f5;font-size:12.5px;line-height:1.35;margin-top:2px}
+input[type=range]{width:100%;accent-color:var(--lotus);margin:6px 0 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600}
+.chk input{width:18px;height:18px;accent-color:var(--lotus)}
+.bowl{position:relative;border-radius:26px;overflow:hidden;background:var(--water-deep);box-shadow:inset 0 0 0 3px rgba(246,185,211,.25),0 20px 40px rgba(0,0,0,.35)}
+canvas{display:block;width:100%}
+#pond{height:380px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-top:10px;color:#dfe6ff}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+#sweep{height:220px;margin-top:16px;background:rgba(255,255,255,.04);border-radius:18px}
+.note{font-size:13px;color:#cdd6f5;margin:8px 0 0}
+#seedIn{width:90px;font:600 14px "JetBrains Mono",monospace;padding:7px 9px;border-radius:12px;border:1.5px solid var(--lotus-pale);background:rgba(0,0,0,.25);color:var(--petal)}
+
+/* ===== KPI BADGES (pin 3: glossy enamel heart on hot pink, bold italic serif) ===== */
+.badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin:22px 0 4px}
+.badge{position:relative;border-radius:30px 30px 34px 34px;padding:16px 14px 14px;text-align:center;color:#fff;
+ background:radial-gradient(120% 90% at 30% 15%,#F59ACB 0%,#D94C93 38%,#A81F62 100%);
+ box-shadow:inset 0 -8px 16px rgba(90,0,40,.45),inset 0 6px 10px rgba(255,255,255,.35),0 10px 22px rgba(0,0,0,.35);overflow:hidden}
+.badge::before{content:"";position:absolute;left:14%;top:7%;width:46%;height:26%;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,0));transform:rotate(-14deg)}
+.badge .v{position:relative;font-family:"Fraunces",serif;font-style:italic;font-weight:900;font-size:32px;line-height:1.05;text-shadow:0 2px 0 rgba(90,0,40,.55)}
+.badge .l{position:relative;font-size:12.5px;font-weight:800;letter-spacing:.04em;margin-top:4px;text-shadow:0 1px 1px rgba(90,0,40,.7)}
+.badge .s{position:relative;display:inline-block;margin-top:8px;font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:99px;background:#fff;color:var(--plum)}
+.badge.fail .s{background:var(--lemon)}
+.badge.pop{animation:pop .45s ease}
+@keyframes pop{40%{transform:scale(1.07)}}
+
+/* ===== MEMO ===== */
+.memo{background:#fffaf4;border-radius:24px;padding:24px;box-shadow:0 0 0 6px #fff,0 0 0 8.5px rgba(58,15,42,.12),10px 14px 24px rgba(58,15,42,.16);max-width:860px}
+.memo dl{display:grid;grid-template-columns:150px 1fr;gap:10px 18px;margin:12px 0 0}
+.memo dt{font-weight:800;color:var(--pink-deep);font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding-top:2px}
+.memo dd{margin:0}
+.vp{margin-top:18px;background:var(--lemon);border:2.5px solid var(--plum);border-radius:16px;padding:12px 14px;font-weight:800;color:var(--plum);box-shadow:5px 5px 0 var(--plum)}
+.stamp{display:inline-block;font-family:"Bagel Fat One";font-size:20px;color:var(--cherry);border:3px solid var(--cherry);border-radius:10px;padding:2px 12px;transform:rotate(-4deg)}
+
+/* ===== MATH + CODE ===== */
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.math p{margin:0 0 10px}
+.formula{font-family:"JetBrains Mono",monospace;background:var(--plum);color:var(--lemon);border-radius:14px;padding:12px 14px;font-size:14px;overflow-x:auto;margin:10px 0}
+#cdfbar{height:150px;background:#fff;border-radius:18px}
+pre{margin:0;background:#1d0f18;color:#ffe9f4;border-radius:18px;padding:16px;font:13px/1.5 "JetBrains Mono",monospace;overflow-x:auto;box-shadow:0 0 0 6px #fff,8px 10px 18px rgba(58,15,42,.2)}
+pre .c{color:#f6a8cc}
+.codehead{font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 8px;color:var(--plum)}
+
+footer{background:var(--plum);color:#f6dbe8;padding:30px 0 34px;font-size:14px}
+footer a{color:var(--lemon)}
+.credits{font-size:11px;color:#d7b6c7;margin-top:10px}
+.credits a{color:#f4cfe0}
+
+@media (max-width:860px){
+ .simgrid,.cols{grid-template-columns:minmax(0,1fr)}
+ .memo dl{grid-template-columns:1fr;gap:2px}
+ .memo dt{margin-top:10px}
+ #pond{height:320px}
+}
+@media (prefers-reduced-motion:reduce){
+ *{animation:none!important;transition:none!important}
+ html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero grain">
+ <svg class="sky" viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+   <path id="st" d="M0,-12 L3.5,-3.8 12,-3.7 5.6,2 7.4,11 0,6.3 -7.4,11 -5.6,2 -12,-3.7 -3.5,-3.8Z"/>
+  </defs>
+  <g class="drift">
+   <path d="M-40,520 C180,420 300,560 520,430 S860,180 1020,250 S1240,120 1260,60 L1260,250 C1120,330 1000,420 840,420 S560,640 360,640 L-40,640Z" fill="#FFEB2B" stroke="#7a2a3a" stroke-width="2.5"/>
+   <path d="M560,520 c40,-30 90,-30 130,-10" fill="none" stroke="#7a2a3a" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <!-- hand-drawn lasso loop: the 'leash' -->
+  <path d="M930,120 c90,-40 170,10 150,80 c-20,70 -140,80 -170,20 c-25,-50 40,-90 90,-60 C1060,190 1050,320 960,420" fill="none" stroke="#3A0F2A" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"/>
+  <g fill="#fff">
+   <use href="#st" x="120" y="90" class="twinkle"/><use href="#st" x="310" y="170" transform="scale(1)" class="twinkle" style="animation-delay:.6s"/>
+   <use href="#st" x="700" y="80" class="twinkle" style="animation-delay:1.1s"/><use href="#st" x="860" y="300" class="twinkle" style="animation-delay:.3s"/>
+   <use href="#st" x="1140" y="440" class="twinkle" style="animation-delay:1.6s"/><use href="#st" x="460" y="590" class="twinkle" style="animation-delay:.9s"/>
+   <use href="#st" x="1040" y="560" class="twinkle" style="animation-delay:2s"/><use href="#st" x="60" y="380" class="twinkle" style="animation-delay:1.3s"/>
+  </g>
+  <g fill="#F7A9D2"><use href="#st" x="610" y="250"/><use href="#st" x="240" y="470"/><use href="#st" x="990" y="40"/><use href="#st" x="760" y="520"/></g>
+  <!-- a little stopwatch on the swoosh -->
+  <g transform="translate(1030,470) rotate(12)">
+   <circle r="44" fill="#fff" stroke="#3A0F2A" stroke-width="5"/><rect x="-9" y="-62" width="18" height="14" rx="4" fill="#3A0F2A"/>
+   <path d="M0,0 L0,-30" stroke="#C8102E" stroke-width="5" stroke-linecap="round"/><path d="M0,0 L20,10" stroke="#3A0F2A" stroke-width="4" stroke-linecap="round"/>
+   <circle r="5" fill="#3A0F2A"/>
+  </g>
+ </svg>
+ <div class="wrap">
+  <span class="kicker">APM Lab · decision prototype</span>
+  <h1>I give agents room to think, and a leash to come home.</h1>
+  <div class="launch">Mirrors the launch: <a href="https://docs.databricks.com/aws/en/release-notes/product/2026/october" target="_blank" rel="noopener">Genie Code tasks in Lakeflow Jobs are now generally available</a> (Databricks release notes, Oct 21 2026): an autonomous agent step that runs a prompt unattended inside a scheduled job.</div>
+  <div class="byline"><span>Shriya Shekatkar</span><span>UCLA · Stats 102C Monte Carlo Methods</span></div>
+ </div>
+</header>
+
+<!-- DECISION -->
+<section class="tulle" id="decision">
+ <div class="wrap">
+  <span class="kicker">01 · The decision</span>
+  <h2>What default time limit should an unattended agent task get?</h2>
+  <p style="max-width:760px;margin:0 0 26px">If I were the PM for agent tasks in scheduled jobs: the agent now runs with no human watching and auto-approval on. Most runs wrap up in a few minutes, but some investigations legitimately take half an hour, and a small share get stuck in a loop and never finish. The default duration limit decides who gets hurt: too short and we kill good work; too long and a stuck agent blocks the morning pipeline and burns compute.</p>
+  <div class="masonry">
+   <div class="sticker" style="--r:-1.2deg">
+    <svg class="bow" viewBox="0 0 46 30" aria-hidden="true"><path d="M23,15 C10,0 0,6 4,15 C0,24 10,30 23,15 C36,30 46,24 42,15 C46,6 36,0 23,15Z" fill="#C8102E"/><circle cx="23" cy="15" r="4.5" fill="#8f0b20"/></svg>
+    <div class="tag">Customer problem</div>
+    <h3>“My 7am job hung until noon.”</h3>
+    <p style="margin:0">A data engineer schedules a nightly anomaly-triage agent after the load job. One night the agent loops on a flaky tool call. Nothing alerts, downstream dashboards stay stale, and the bill shows five idle agent-hours. The next week she adds her own 5-minute timeout, and now her longer audits get cut off mid-answer.</p>
+   </div>
+   <div class="sticker corset" style="--r:1deg">
+    <div class="tag">Proposed change</div>
+    <h3>Ship a smart default duration limit</h3>
+    <p style="margin:0">Every new agent task gets a default timeout (editable), plus an optional single automatic retry on timeout. The prototype below picks the number.</p>
+    <div class="lace"><i></i><i></i><i></i><i></i><i></i></div>
+   </div>
+   <div class="sticker" style="--r:.8deg">
+    <div class="tag">Success metric</div>
+    <h3>Delivered-answer rate ≥ 97%</h3>
+    <p style="margin:0">Share of scheduled agent runs that end with a final response the downstream task can use, within the job's window.</p>
+   </div>
+   <div class="sticker" style="--r:-.6deg">
+    <div class="tag">Guardrails</div>
+    <div class="guard"><span>Healthy runs killed by the limit</span><b>≤ 2%</b></div>
+    <div class="guard"><span>p95 task wall-clock (incl. retry)</span><b>≤ 30 min</b></div>
+    <div class="guard"><span>Agent-minutes per 1k runs</span><b>≤ 6,000</b></div>
+    <div class="guard"><span>Share of minutes burned by stuck runs</span><b>≤ 15%</b></div>
+   </div>
+   <div class="sticker" style="--r:1.3deg">
+    <div class="tag">Stakeholders</div>
+    <ul>
+     <li><b>Data engineers</b> who own the jobs and get paged</li>
+     <li><b>Workspace admins</b> watching the compute bill</li>
+     <li><b>Agent / AI platform eng</b> who own the runtime</li>
+     <li><b>Jobs orchestration team</b> who own timeouts and retries</li>
+     <li><b>Security & governance</b>: unattended runs with auto-approval</li>
+    </ul>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- SIMULATION -->
+<section class="sim grain" id="sim">
+ <div class="wrap">
+  <span class="kicker">02 · Live simulation</span>
+  <h2>The lotus pond: 20,000 simulated agent runs</h2>
+  <p style="max-width:780px;margin:0 0 20px;color:#dfe6ff">Each petal is one run. Its lane is the kind of task, drawn from a discrete table; its length comes from a geometric number of tool steps, each with an exponential duration, all sampled by the inverse-CDF method. Pink petals finish; cream petals are healthy runs the limit killed; dark-red petals are stuck loops the limit caught.</p>
+  <div class="simgrid">
+   <div class="panel">
+    <div class="ctl"><label for="tLim">Default time limit <output id="tLimO"></output></label><input id="tLim" type="range" min="2" max="60" step="1" value="10"><small>The lever we ship. Applies to every attempt.</small></div>
+    <div class="ctl"><label for="stuck">Stuck-loop rate <output id="stuckO"></output></label><input id="stuck" type="range" min="0" max="8" step="0.5" value="2"><small>Share of runs that would never finish on their own.</small></div>
+    <div class="ctl"><label for="heavy">Heavy-task share <output id="heavyO"></output></label><input id="heavy" type="range" min="5" max="45" step="1" value="25"><small>Investigations + audits in the mix (the rest are summaries and triage).</small></div>
+    <div class="ctl"><label for="slow">Tool latency multiplier <output id="slowO"></output></label><input id="slow" type="range" min="0.6" max="2" step="0.1" value="1"><small>A slow warehouse or MCP server stretches every step.</small></div>
+    <div class="ctl chk"><input id="retry" type="checkbox" checked><label for="retry" style="display:inline">Retry once automatically on timeout</label></div>
+    <div class="row" style="margin-top:10px">
+     <label for="seedIn" style="font-size:13px;font-weight:600">Seed</label><input id="seedIn" type="number" value="102" min="1" max="999999">
+     <button class="btn" id="rerun">Re-run</button>
+     <button class="btn ghost" id="best">Use best limit</button>
+    </div>
+    <p class="note" id="status" aria-live="polite"></p>
+   </div>
+   <div>
+    <div class="bowl"><canvas id="pond" aria-label="Scatter of simulated agent run durations by task type, with the time limit as a vertical line" role="img"></canvas></div>
+    <div class="legend"><span><i style="background:#F07AB0"></i>finished</span><span><i style="background:#F4F1E6"></i>healthy, killed by limit</span><span><i style="background:#7A1630;box-shadow:0 0 0 1.5px #F6B9D3"></i>stuck loop, caught</span><span><i style="background:#FFEB2B"></i>time limit</span></div>
+    <canvas id="sweep" aria-label="Line chart of healthy-kill rate and agent minutes as the time limit varies" role="img"></canvas>
+    <p class="note">Sweep: every limit from 2 to 60 min evaluated on the same draws. Pink = healthy runs killed (%), cream = agent-minutes per run, yellow band = limits that pass all four guardrails; the button picks the tightest one.</p>
+   </div>
+  </div>
+  <div class="badges" id="badges"></div>
+ </div>
+</section>
+
+<!-- MEMO -->
+<section class="tulle" id="memo">
+ <div class="wrap">
+  <span class="kicker">03 · Director memo</span>
+  <h2>The memo writes itself from the pond</h2>
+  <div class="memo">
+   <div class="row" style="justify-content:space-between"><b style="font-size:14px;color:var(--muted)">To: Director, AI Platform · From: Shriya (APM) · Re: default agent task limit</b><span class="stamp" id="stamp">SHIP</span></div>
+   <dl>
+    <dt>Decision</dt><dd id="mDecision"></dd>
+    <dt>Evidence</dt><dd id="mEvidence"></dd>
+    <dt>Risks</dt><dd id="mRisks"></dd>
+    <dt>Rollout</dt><dd id="mRollout"></dd>
+    <dt>Next step</dt><dd id="mNext"></dd>
+   </dl>
+   <div class="vp" id="mVP"></div>
+  </div>
+ </div>
+</section>
+
+<!-- MATH -->
+<section id="math">
+ <div class="wrap">
+  <span class="kicker">04 · The math</span>
+  <h2>The math, from my Monte Carlo course</h2>
+  <div class="cols math">
+   <div>
+    <p><b>Inverse CDF method.</b> Any distribution has a cumulative curve F that climbs from 0 to 1. Draw a uniform U between 0 and 1, read it on the vertical axis, and walk across to the curve: the x you land on, F⁻¹(U), is a draw from that distribution. One uniform in, one realistic sample out.</p>
+    <div class="formula">step time (exponential):  T = −μ · ln(U)<br>tool steps (geometric):   K = ⌈ ln(U) / ln(1−p) ⌉<br>task type (discrete):     first k with U ≤ F(k)</div>
+    <p><b>Product example.</b> “How long does one tool call take?” is exponential: most are quick, a few drag. “How many tool calls before the agent is done?” is geometric: after each step there's a chance p it has enough to answer. The task type is a finite table, so I cut [0,1] into slices sized by each type's share and see which slice U falls in (the bar on the right). Stack them and I get a whole run's duration without ever writing its messy distribution down.</p>
+    <p><b>Why Monte Carlo.</b> The total runtime is a random sum of random step times, plus a stuck-loop mixture. The kill rate at a limit t is just the fraction of simulated healthy runs longer than t, and by the law of large numbers that fraction settles on the truth as runs grow (its standard error shrinks like 1/√n).</p>
+   </div>
+   <div>
+    <p class="codehead">Partitioning [0, 1] by task type</p>
+    <canvas id="cdfbar" aria-label="Cumulative bar splitting zero to one by task type share" role="img"></canvas>
+    <p class="note" style="color:var(--muted)">Dots are 60 uniforms; each lands in the slice of the task type it becomes. Changes with the heavy-task slider.</p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- CODE -->
+<section class="tulle" id="code">
+ <div class="wrap">
+  <span class="kicker">05 · Real data</span>
+  <h2>How I'd run it on real data</h2>
+  <div class="cols">
+   <div>
+    <p class="codehead">SQL · fit the inputs from run history</p>
+<pre><span class="c">-- illustrative table names</span>
+WITH runs AS (
+  SELECT task_kind,
+         run_id,
+         tool_steps,
+         duration_s,
+         end_state            <span class="c">-- 'SUCCESS' | 'TIMEOUT' | 'CANCELED'</span>
+  FROM main.agent_ops.agent_task_runs
+  WHERE start_time &gt;= current_date() - INTERVAL 30 DAYS
+)
+SELECT task_kind,
+       count(*) / sum(count(*)) OVER ()      AS share,
+       1 / avg(tool_steps)                   AS p_stop,
+       avg(duration_s / tool_steps)          AS mean_step_s,
+       avg(CASE WHEN end_state = 'TIMEOUT'
+                 AND tool_steps &gt; 150 THEN 1 ELSE 0 END) AS loop_rate,
+       percentile_approx(duration_s, 0.95)   AS p95_s
+FROM runs
+GROUP BY task_kind;</pre>
+   </div>
+   <div>
+    <p class="codehead">Python · inverse-CDF simulation</p>
+<pre>import numpy as np
+rng = np.random.default_rng(102)
+
+def simulate(kinds, n=20_000, loop_rate=0.02):
+    share = kinds["share"].to_numpy()
+    k = np.searchsorted(np.cumsum(share), rng.random(n))
+    p = kinds["p_stop"].to_numpy()[k]
+    mu = kinds["mean_step_s"].to_numpy()[k]
+    steps = np.ceil(np.log(rng.random(n)) / np.log1p(-p))
+    <span class="c"># sum of K exponentials, each -mu*ln(U)</span>
+    dur = np.array([(-m*np.log(rng.random(int(s)))).sum()
+                    for m, s in zip(mu, steps)]) + 20
+    stuck = rng.random(n) &lt; loop_rate
+    dur[stuck] = np.inf
+    return k, dur, stuck
+
+def kill_rate(dur, stuck, limit_s):
+    return (dur[~stuck] &gt; limit_s).mean()
+
+k, dur, stuck = simulate(kinds)
+best = min(t for t in range(120, 3601, 60)
+           if kill_rate(dur, stuck, t) &lt;= 0.02)</pre>
+   </div>
+  </div>
+ </div>
+</section>
+
+<footer>
+ <div class="wrap">
+  <div>Unofficial concept prototype by Shriya Shekatkar. All data is simulated. Not affiliated with any company.</div>
+  <div style="margin-top:8px"><a href="https://shriyashekatkar25-byte.github.io/apm-lab/">← Back to the APM Lab gallery</a></div>
+  <div class="credits">Design inspired by: <a href="https://www.pinterest.com/pin/316096467574310818/">YoshieHirota</a> · <a href="https://www.pinterest.com/pin/634515035051633288/">Pastry Halloween costume (pendingpersonality)</a> · <a href="https://www.pinterest.com/pin/1132092425111735571/">Abundance (My Lucky Numbers List)</a> · <a href="https://www.pinterest.com/pin/863354191097234850/">Sanjyot Dhote</a></div>
+ </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const N=20000, STARTUP=20, PLATFORM_CAP=240; // minutes a stuck run idles if no limit fires (simulated)
+const KINDS=[
+ {name:"Morning summary", steps:6,  step:9},
+ {name:"Anomaly triage",  steps:14, step:14},
+ {name:"Ticket investigation", steps:26, step:19},
+ {name:"Compliance audit", steps:42, step:24}
+];
+function shares(heavy){const h=heavy/100, light=1-h; return [light*0.6, light*0.4, h*0.72, h*0.28];}
+let sim=null;
+function draw1(rng,kind,slow){ // one attempt: minutes, or Infinity if stuck
+ const K=KINDS[kind], p=1/K.steps;
+ const steps=Math.max(1,Math.ceil(Math.log(1-rng())/Math.log(1-p)));
+ let s=STARTUP; for(let i=0;i<steps;i++) s+=-K.step*slow*Math.log(1-rng());
+ return s/60;
+}
+function simulate(){
+ const seed=parseInt($("seedIn").value)||102, rng=mulberry32(seed);
+ const sh=shares(+$("heavy").value), cum=[]; sh.reduce((a,b,i)=>(cum[i]=a+b),0);
+ const stuckR=+$("stuck").value/100, slow=+$("slow").value;
+ const kind=new Uint8Array(N), d1=new Float64Array(N), d2=new Float64Array(N), st1=new Uint8Array(N), st2=new Uint8Array(N), jit=new Float32Array(N);
+ for(let i=0;i<N;i++){
+  const u=rng(); let k=0; while(k<3&&u>cum[k])k++; kind[i]=k;
+  st1[i]=rng()<stuckR?1:0; d1[i]=st1[i]?Infinity:draw1(rng,k,slow);
+  st2[i]=rng()<stuckR?1:0; d2[i]=st2[i]?Infinity:draw1(rng,k,slow);
+  jit[i]=rng();
+ }
+ sim={kind,d1,d2,st1,st2,jit,cum};
+ sweepAll();
+}
+function evalLimit(T,retry){
+ const {d1,d2,st1}=sim; let delivered=0, healthyKilled=0, healthy=0, minutes=0, stuckMin=0; const wall=new Float64Array(N);
+ for(let i=0;i<N;i++){
+  let w=0, ok=false;
+  const a=Math.min(d1[i],T); w+=a; if(d1[i]<=T) ok=true;
+  if(!st1[i]){healthy++; if(d1[i]>T) healthyKilled++;}
+  if(st1[i]) stuckMin+=a;
+  if(!ok&&retry){const b=Math.min(d2[i],T); w+=b; if(d2[i]<=T) ok=true; if(sim.st2[i]) stuckMin+=b;}
+  if(!isFinite(T)){ /* unreachable */ }
+  if(ok)delivered++; minutes+=w; wall[i]=w;
+ }
+ wall.sort();
+ return {T,delivered:delivered/N, kill:healthy?healthyKilled/healthy:0, p95:wall[Math.floor(.95*N)], perK:minutes/N*1000, stuckShare:minutes?stuckMin/minutes:0};
+}
+const G={kill:.02,p95:30,perK:6000,stuck:.15,deliv:.97};
+function passes(r){return r.kill<=G.kill&&r.p95<=G.p95&&r.perK<=G.perK&&r.stuckShare<=G.stuck;}
+let sweep=[], best=null;
+function sweepAll(){
+ const retry=$("retry").checked; sweep=[];
+ for(let T=2;T<=60;T++) sweep.push(evalLimit(T,retry));
+ const ok=sweep.filter(passes);
+ best=ok.length?ok[0]:null; // tightest leash that passes every guardrail
+ window.__sweep=sweep; render();
+}
+function fmt(n,d=0){return n.toLocaleString("en-US",{maximumFractionDigits:d,minimumFractionDigits:d});}
+function pct(x,d=1){return fmt(x*100,d)+"%";}
+// ---------- pond ----------
+let animId=null;
+function sizeCanvas(c){const r=c.getBoundingClientRect(), dpr=Math.min(2,window.devicePixelRatio||1); c.width=Math.round(r.width*dpr); c.height=Math.round(r.height*dpr); const x=c.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0); return [x,r.width,r.height];}
+function xOf(m,W,pad){const lo=Math.log(0.5), hi=Math.log(PLATFORM_CAP); const v=Math.log(Math.max(.5,Math.min(PLATFORM_CAP,m))); return pad+(v-lo)/(hi-lo)*(W-pad-14);}
+function drawPond(){
+ if(animId)cancelAnimationFrame(animId);
+ const c=$("pond"); const [x,W,H]=sizeCanvas(c); const T=+$("tLim").value; const pad=W<500?14:120;
+ const lanes=4, top=26, bot=36, laneH=(H-top-bot)/lanes;
+ function bg(){
+  const g=x.createRadialGradient(W*.5,H*.1,20,W*.5,H*.5,W*.8); g.addColorStop(0,"#1f45a3"); g.addColorStop(1,"#0a1a47"); x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.strokeStyle="rgba(246,185,211,.14)"; x.lineWidth=1;
+  for(let r=1;r<6;r++){x.beginPath(); x.ellipse(W*.72,H*.55,r*60,r*22,0,0,Math.PI*2); x.stroke();}
+  x.font="600 11px 'DM Sans',sans-serif"; x.fillStyle="#dfe6ff";
+  for(let k=0;k<lanes;k++){const y=top+k*laneH; x.fillStyle="rgba(255,255,255,.04)"; if(k%2===0)x.fillRect(0,y,W,laneH); x.fillStyle="#dfe6ff"; if(pad>20){x.fillText(KINDS[k].name,10,y+laneH/2+4);} else {x.fillText(KINDS[k].name,6,y+12);} }
+  [1,2,5,10,20,30,60,120,240].forEach(m=>{const X=xOf(m,W,pad); x.fillStyle="rgba(223,230,255,.75)"; x.fillText(m>=60?(m/60)+"h":m+"m",X-8,H-14); x.fillStyle="rgba(223,230,255,.15)"; x.fillRect(X,top,1,H-top-bot);});
+  x.fillStyle="#dfe6ff"; x.fillText("run duration (log scale) · stuck runs drift to the right edge", pad, H-2);
+ }
+ const order=[]; const M=reduce?2500:2500; for(let i=0;i<M;i++)order.push(i);
+ function petal(i){
+  const k=sim.kind[i], d=sim.d1[i], st=sim.st1[i]; let m=st?PLATFORM_CAP*(0.9+0.1*sim.jit[i]):d;
+  const X=xOf(m,W,pad), Y=top+k*laneH+6+sim.jit[i]*(laneH-12);
+  let col; if(st) col="#7A1630"; else if(d>T) col="#F4F1E6"; else col=(i%3?"#F07AB0":"#F6B9D3");
+  x.fillStyle=col; x.beginPath(); x.ellipse(X,Y,4,2.4,(i%7)/7*Math.PI,0,Math.PI*2); x.fill();
+  if(st){x.strokeStyle="rgba(246,185,211,.6)"; x.lineWidth=.8; x.stroke();}
+ }
+ function shade(){const X=xOf(T,W,pad); x.fillStyle="rgba(255,235,43,.10)"; x.fillRect(X,top,W-X,H-top-bot);}
+ function labels(){ if(pad>20)return; x.font="700 11px 'DM Sans',sans-serif"; for(let k=0;k<lanes;k++){const y=top+k*laneH; const t=KINDS[k].name; const w=x.measureText(t).width; x.fillStyle="rgba(10,26,71,.85)"; x.fillRect(4,y+2,w+8,15); x.fillStyle="#F6B9D3"; x.fillText(t,8,y+13);} }
+ function limitLine(){const X=xOf(T,W,pad); x.strokeStyle="#FFEB2B"; x.lineWidth=3; x.setLineDash([7,5]); x.beginPath(); x.moveTo(X,top-6); x.lineTo(X,H-bot+4); x.stroke(); x.setLineDash([]); x.fillStyle="#FFEB2B"; x.font="800 13px 'DM Sans',sans-serif"; const lbl="limit "+T+" min"; x.fillText(lbl,Math.min(X+6,W-90),top-8);}
+ if(reduce){bg(); shade(); for(const i of order)petal(i); labels(); limitLine(); return;}
+ let n=0; bg(); shade(); limitLine();
+ (function step(){ const to=Math.min(M,n+120); for(;n<to;n++)petal(order[n]); labels(); limitLine(); if(n<M) animId=requestAnimationFrame(step); })();
+}
+// ---------- sweep chart ----------
+function drawSweep(){
+ const c=$("sweep"); const [x,W,H]=sizeCanvas(c); const L=40,R=46,T0=16,B=28; const T=+$("tLim").value;
+ x.clearRect(0,0,W,H);
+ const X=t=>L+(t-2)/58*(W-L-R); const maxK=Math.max(.05,...sweep.map(s=>s.kill)); const maxM=Math.max(...sweep.map(s=>s.perK/1000));
+ const Yk=v=>H-B-(v/maxK)*(H-B-T0), Ym=v=>H-B-(v/maxM)*(H-B-T0);
+ // pass band
+ x.fillStyle="rgba(255,235,43,.18)"; sweep.forEach(s=>{if(passes(s))x.fillRect(X(s.T)-((W-L-R)/58)/2,T0,(W-L-R)/58,H-B-T0);});
+ x.strokeStyle="rgba(223,230,255,.25)"; x.lineWidth=1; x.beginPath(); x.moveTo(L,H-B); x.lineTo(W-R,H-B); x.stroke();
+ x.font="600 11px 'DM Sans',sans-serif"; x.fillStyle="#dfe6ff";
+ [2,10,20,30,40,50,60].forEach(t=>x.fillText(t+"m",X(t)-8,H-10));
+ x.fillStyle="#F6B9D3"; x.fillText(pct(maxK,0),4,T0+8); x.fillText("0%",14,H-B);
+ x.fillStyle="#F4F1E6"; x.fillText(fmt(maxM,0)+"k",W-R+6,T0+8);
+ const line=(f,col)=>{x.strokeStyle=col; x.lineWidth=2.5; x.beginPath(); sweep.forEach((s,i)=>{const px=X(s.T),py=f(s); i?x.lineTo(px,py):x.moveTo(px,py);}); x.stroke();};
+ line(s=>Yk(s.kill),"#F07AB0"); line(s=>Ym(s.perK/1000),"#F4F1E6");
+ x.strokeStyle="#FFEB2B"; x.setLineDash([5,4]); x.beginPath(); x.moveTo(X(T),T0); x.lineTo(X(T),H-B); x.stroke(); x.setLineDash([]);
+ x.strokeStyle="rgba(240,122,176,.6)"; x.setLineDash([2,3]); x.beginPath(); x.moveTo(L,Yk(G.kill)); x.lineTo(W-R,Yk(G.kill)); x.stroke(); x.setLineDash([]);
+}
+// ---------- cdf bar ----------
+function drawCdf(){
+ const c=$("cdfbar"); const [x,W,H]=sizeCanvas(c); const sh=shares(+$("heavy").value); const cols=["#F6B9D3","#F07AB0","#D9488B","#B8286F"]; const txt=["#3A0F2A","#3A0F2A","#fff","#fff"];
+ const L=12,R=12,y=46,h=40; let a=0; x.clearRect(0,0,W,H);
+ sh.forEach((s,i)=>{const x0=L+a*(W-L-R), w=s*(W-L-R); x.fillStyle=cols[i]; x.fillRect(x0,y,w,h); x.fillStyle=txt[i]; x.font="800 11px 'DM Sans',sans-serif"; if(w>42)x.fillText(["summary","triage","ticket","audit"][i],x0+5,y+16); if(w>42)x.fillText(pct(s,0),x0+5,y+31); a+=s;});
+ x.strokeStyle="#3A0F2A"; x.lineWidth=2; x.strokeRect(L,y,W-L-R,h);
+ x.fillStyle="#3A0F2A"; x.font="600 11px 'JetBrains Mono',monospace"; x.fillText("0",L,y+h+16); x.fillText("1",W-R-8,y+h+16); x.fillText("U ~ Uniform(0,1)",L,22);
+ const r=mulberry32(7); for(let i=0;i<60;i++){const u=r(); const px=L+u*(W-L-R); x.fillStyle="#C8102E"; x.beginPath(); x.arc(px,y-8-(i%4)*5,2.6,0,Math.PI*2); x.fill(); x.fillStyle="rgba(200,16,46,.35)"; x.fillRect(px-.5,y-6,1,6);}
+ x.fillStyle="#3A0F2A"; x.fillText("task = first slice whose right edge ≥ U",L,y+h+36);
+}
+// ---------- badges + memo ----------
+function badge(v,l,ok,s){return `<div class="badge ${ok?"":"fail"} pop"><div class="v">${v}</div><div class="l">${l}</div><div class="s">${ok?"✓ ":"✕ "}${s}</div></div>`;}
+function render(){
+ const T=+$("tLim").value, retry=$("retry").checked; const r=evalLimit(T,retry); const none=evalLimit(PLATFORM_CAP,false);
+ $("tLimO").textContent=T+" min"; $("stuckO").textContent=$("stuck").value+"%"; $("heavyO").textContent=$("heavy").value+"%"; $("slowO").textContent="×"+(+$("slow").value).toFixed(1);
+ $("badges").innerHTML=
+  badge(pct(r.delivered),"Delivered answers",r.delivered>=G.deliv,"target ≥ 97%")+
+  badge(pct(r.kill),"Healthy runs killed",r.kill<=G.kill,"≤ 2%")+
+  badge(fmt(r.p95,1)+"m","p95 wall-clock",r.p95<=G.p95,"≤ 30 min")+
+  badge(fmt(r.perK/1000,1)+"k","Agent-min / 1k runs",r.perK<=G.perK,"≤ 6k")+
+  badge(pct(r.stuckShare,0),"Minutes on stuck runs",r.stuckShare<=G.stuck,"≤ 15%");
+ $("status").textContent=`Seed ${$("seedIn").value} · ${fmt(N)} runs · ${best?("best passing limit: "+best.T+" min"):"no limit passes all guardrails"}`;
+ drawPond(); drawSweep(); drawCdf();
+ // memo
+ const ok=passes(r)&&r.delivered>=G.deliv; const stamp=$("stamp");
+ stamp.textContent= ok?"SHIP":(best?"ADJUST":"HOLD");
+ const b=best;
+ $("mDecision").innerHTML = b
+  ? `Ship a default limit of <b>${b.T} minutes</b>${retry?" with one automatic retry on timeout":""}, editable per task. ${b.T===T?"That is the setting on screen.":`The setting on screen (${T} min) ${ok?"also passes, but":"fails a guardrail;"} ${b.T} min is the tightest limit that passes every guardrail.`}`
+  : `<b>Hold.</b> Under these assumptions no single default between 2 and 60 minutes passes all four guardrails. Ship per-task-type defaults instead of one number.`;
+ const rb=b||r;
+ $("mEvidence").innerHTML = `Across ${fmt(N)} simulated runs, a ${rb.T}-min limit delivers <b>${pct(rb.delivered)}</b> of answers, kills <b>${pct(rb.kill)}</b> of healthy runs, keeps p95 wall-clock at <b>${fmt(rb.p95,1)} min</b>, and uses <b>${fmt(rb.perK/1000,1)}k</b> agent-minutes per 1k runs. With no limit (stuck runs idle until a ${PLATFORM_CAP/60}-hour cap), stuck loops would eat <b>${pct(none.stuckShare,0)}</b> of all agent minutes.`;
+ const heavy=+$("heavy").value, stuck=+$("stuck").value;
+ $("mRisks").innerHTML = `Heavy tasks (audits, investigations) carry the kill risk: ${heavy>30?"this workspace mix is audit-heavy, so one global number is fragile.":"they are a minority here, but they are also the highest-value runs."} Stuck-loop rate (${stuck}%) is the input I trust least; a ${stuck>=4?"rate this high suggests a tool-reliability bug to fix upstream, not a timeout to tune.":"spike in it would push more minutes into waste."} Retrying a stuck run doubles its cost${retry?", so retry stays at one attempt.":"."}`;
+ $("mRollout").innerHTML = `Shadow mode first: log what the default <i>would</i> have killed for 2 weeks with no enforcement. Then enforce for new tasks only at 10% of workspaces, 50%, 100%, with a kill switch. Show the limit and its reason in the task editor so owners can raise it for audits.`;
+ $("mNext").innerHTML = `Pull 30 days of real agent-task runs (query below), refit step counts and step times per task type, re-run this sweep, and review the per-type split with the jobs orchestration team before the 10% gate.`;
+ $("mVP").innerHTML = b
+  ? `“A ${b.T}-minute default ${retry?"plus one retry ":""}lets ${pct(b.delivered,0)} of agent runs finish while catching every stuck loop, and saves about ${pct(Math.max(0,1-b.perK/none.perK),0)} of agent compute versus no limit.”`
+  : `“One default can't serve both quick summaries and long audits here; we should ship limits per task type and fix the stuck-loop source first.”`;
+}
+// ---------- wire up ----------
+let rt=null; const resim=()=>{clearTimeout(rt); rt=setTimeout(simulate,120);};
+["stuck","heavy","slow"].forEach(id=>$(id).addEventListener("input",resim));
+$("tLim").addEventListener("input",render);
+$("retry").addEventListener("change",sweepAll);
+$("rerun").addEventListener("click",simulate);
+$("seedIn").addEventListener("change",simulate);
+$("best").addEventListener("click",()=>{if(best){$("tLim").value=best.T; render();}});
+let wr=null; window.addEventListener("resize",()=>{clearTimeout(wr); wr=setTimeout(()=>{drawPond();drawSweep();drawCdf();},150);});
+simulate();
+})();
+</script>
+</body>
+</html>
